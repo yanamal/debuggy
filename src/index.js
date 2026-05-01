@@ -267,6 +267,7 @@ ${directive}
 
 		const response = await env.AI.run('@cf/google/gemma-4-26b-a4b-it', { messages });
 
+		console.log({prompt: problem_desc, response: response})
 		return new Response(JSON.stringify(response), {
 			headers: { 
 			'Content-Type': 'application/json',
