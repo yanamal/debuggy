@@ -37,15 +37,19 @@ Each function returns a short text summary of what it did, and the world state i
 The player is working on a function, put_out_fires(x, y), which must both put out a nearby fire, and then erase any water that was used in putting out that fire.
 
 The function is tested by clearing the screen of water, spawing a fire, and having the player use the game interface to manually cast put_out_fires() positioned near or on the fire. So, it is normal and expected if put_out_fires is called with coordinates that are close to, but not exactly the same, as the coordinates of the fire. Do not focus on this difference in coordinates, unless there is reason to believe that it caused a problem (such as the fire not being put out).
+
+Keep in mind that may be the first function that the player has ever tried to write, so they may not have a strong grasp of concepts like variable, function signature, documentation, comments, etc.
 			`.trim(),
 			zerro: `
 ## Problem: zerro
 
-The player is working on a function, zerro(), for a boy named Zerro. This function takes no parameters, and is supposed to draw a recognizable "Z" symbol using the water and wind functions, in front of wherever the caster is standing. The starting code given to the player makes a big water circle in front of the caster, so the expectation is that the rest of the code will then draw a "z" in the water using 3 calls to (wind) that create:
+The player is working on a function, zerro(), for a boy named Zerro. This function takes no parameters, and is supposed to draw a recognizable "Z" symbol using the water and wind functions, in front of wherever the caster is standing. The starting code given to the player makes a big water circle in front of the caster, so the implied expectation is that the rest of the code will then draw a "z" in the water using 3 calls to (wind) that create:
 
 - one horizontal top line (parallel to the y axis in the caster-centric coordinate system)
 - one diagonal line (where if x1 < x2, then y1 > y2 and vice versa)
 - one more horizontal bottom line (also parallel to the y axis, with similar y1 and y2 to the top line, but using a smaller x-coordinate)
+
+Keep in mind that this is not explicitly spelled out to the player, so they may choose a different approach, but this is the simplest and most likely approach they might take.
 
 The function is tested by clearing the screen of water and fire, then calling zerro() from the point of view of the Zerro character. This character is facing up when he casts the spell, so "up" on the screen is also "up" for him. So, we do not expect to see problems based on ambiguous orientation, unless the player wasn't sure how to draw a Z in the expected orientation. The character then judges (using OCR, thought this is an implementation detail not made clear to the player) whether what is drawn looks like a Z.
 			`.trim()
