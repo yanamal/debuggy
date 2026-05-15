@@ -14,6 +14,44 @@ export default {
 		//   return new Response('Forbidden', { status: 403 });
 		// }
 
+		// configuration for the different available worlds and problems:
+		const worlds = {
+			elemental: `
+## World: Elemental Magic World
+
+The player's code is a function being called in the context of a world where functions are "magic spells". The world is a top-down 2D world. The coordinates in the spells are specified from the spellcaster's point of view: (0, 0) is the caster's location, and the x-axis points forward in the direction that the caster is facing.
+
+The player has access to the following functions:
+fire(x, y) - create a fire element at position (x, y) relative to the caster.
+water(x, y, r) - create a circle of water at position (x, y) relative to the caster, of radius r. When water touches fire elements, that fire is put out. The water remains in the world until explicitly erased.
+wind(x1, y1, x2, y2, w) - create a "wind tunnel" from (x1, y1) to (x2, y2) (in caster-relative coordinates). The tunnel is a rectangle of width w, with (x1, y1) and (x2, y2) at the centers of the two sides with length w. Water is erased within the entire rectangle formed by the wind tunnel.
+
+Each function returns a short text summary of what it did, and the world state immediately after calling that funciton.			
+			`.trim()
+		}
+
+		const problems = {
+			put_out_fire: `
+## Problem: put_out_fires
+
+The player is working on a function, put_out_fires(x, y), which must both put out a nearby fire, and then erase any water that was used in putting out that fire.
+
+The function is tested by clearing the screen of water, spawing a fire, and having the player use the game interface to manually cast put_out_fires() positioned near or on the fire. So, it is normal and expected if put_out_fires is called with coordinates that are close to, but not exactly the same, as the coordinates of the fire. Do not focus on this difference in coordinates, unless there is reason to believe that it caused a problem (such as the fire not being put out).
+			`.trim(),
+			zerro: `
+## Problem: zerro
+
+The player is working on a function, zerro(), for a boy named Zerro. This function takes no parameters, and is supposed to draw a recognizable "Z" symbol using the water and wind functions, in front of wherever the caster is standing. The starting code given to the player makes a big water circle in front of the caster, so the expectation is that the rest of the code will then draw a "z" in the water using 3 calls to (wind) that create:
+
+- one horizontal top line (parallel to the y axis in the caster-centric coordinate system)
+- one diagonal line (where if x1 < x2, then y1 > y2 and vice versa)
+- one more horizontal bottom line (also parallel to the y axis, with similar y1 and y2 to the top line, but using a smaller x-coordinate)
+
+The function is tested by clearing the screen of water and fire, then calling zerro() from the point of view of the Zerro character. This character is facing up when he casts the spell, so "up" on the screen is also "up" for him. So, we do not expect to see problems based on ambiguous orientation, unless the player wasn't sure how to draw a Z in the expected orientation. The character then judges (using OCR, thought this is an implementation detail not made clear to the player) whether what is drawn looks like a Z.
+			`.trim()
+		}
+
+
 		const system_prompt = `
 You are a "Consulting Bug Detective" character in a game that teaches programming. You help the player investigate and understand how their code is behaving, compared to how it should behave. However, you are a detective, not a repairman. Your job is to uncover the truth, not to fix it.
 
@@ -32,136 +70,27 @@ A list of 1-5 new nodes (Clues and/or Questions) that expand primarily on the "a
 Each Clue or Question should be around one sentence. The text can reference the code and the steps in the execution trace. The player has access to an interactive version of the execution trace.
 `.trim()
 
-
-		// a default version of input to test with (if no request body)
-		let default_input = {
-			state_before: `
-		fires at: (385, 545)
-		0 water
-			`.trim(),
-			player_code: `
-		function put_out_fire(x, y) {
-			water(x, y, 100);
-			wind(0, 0, x, y, 100);
-		}
-		put_out_fire(-340, 607)
-		`.trim(),
-			execution_trace: [
-		{
-			"executedCode": "★function put_out_fire(x, y) {\n    water(x, y, 100);\n    wind(0, 0, x, y, 100);\n}★",
-			"nodeType": "FunctionDeclaration",
-			"exception": null
-		},
-		{
-			"executedCode": "★put_out_fire★(-340, 607)",
-			"nodeType": "Identifier",
-			"exception": null
-		},
-		{
-			"executedCode": "put_out_fire(-★340★, 607)",
-			"producedValue": 340,
-			"nodeType": "Literal",
-			"exception": null
-		},
-		{
-			"executedCode": "put_out_fire(★-340★, 607)",
-			"producedValue": -340,
-			"nodeType": "UnaryExpression",
-			"exception": null
-		},
-		{
-			"executedCode": "put_out_fire(-340, ★607★)",
-			"producedValue": 607,
-			"nodeType": "Literal",
-			"exception": null
-		},
-		{
-			"executedCode": "function put_out_fire(x, y) {\n    ★water★(x, y, 100);\n    wind(0, 0, x, y, 100);\n}",
-			"nodeType": "Identifier",
-			"exception": null
-		},
-		{
-			"executedCode": "function put_out_fire(x, y) {\n    water(★x★, y, 100);\n    wind(0, 0, x, y, 100);\n}",
-			"producedValue": -340,
-			"nodeType": "Identifier",
-			"exception": null
-		},
-		{
-			"executedCode": "function put_out_fire(x, y) {\n    water(x, ★y★, 100);\n    wind(0, 0, x, y, 100);\n}",
-			"producedValue": 607,
-			"nodeType": "Identifier",
-			"exception": null
-		},
-		{
-			"executedCode": "function put_out_fire(x, y) {\n    water(x, y, ★100★);\n    wind(0, 0, x, y, 100);\n}",
-			"producedValue": 100,
-			"nodeType": "Literal",
-			"exception": null
-		},
-		{
-			"executedCode": "function put_out_fire(x, y) {\n    ★water(x, y, 100)★;\n    wind(0, 0, x, y, 100);\n}",
-			"producedValue": "Made water \nposition: (-340, 606)\nradius: 100\nWorld state is now:\nNo fires\n32683 water",
-			"nodeType": "CallExpression",
-			"exception": null
-		},
-		{
-			"executedCode": "function put_out_fire(x, y) {\n    water(x, y, 100);\n    ★wind★(0, 0, x, y, 100);\n}",
-			"nodeType": "Identifier",
-			"exception": null
-		},
-		{
-			"executedCode": "function put_out_fire(x, y) {\n    water(x, y, 100);\n    wind(★0★, 0, x, y, 100);\n}",
-			"producedValue": 0,
-			"nodeType": "Literal",
-			"exception": null
-		},
-		{
-			"executedCode": "function put_out_fire(x, y) {\n    water(x, y, 100);\n    wind(0, ★0★, x, y, 100);\n}",
-			"producedValue": 0,
-			"nodeType": "Literal",
-			"exception": null
-		},
-		{
-			"executedCode": "function put_out_fire(x, y) {\n    water(x, y, 100);\n    wind(0, 0, ★x★, y, 100);\n}",
-			"producedValue": -340,
-			"nodeType": "Identifier",
-			"exception": null
-		},
-		{
-			"executedCode": "function put_out_fire(x, y) {\n    water(x, y, 100);\n    wind(0, 0, x, ★y★, 100);\n}",
-			"producedValue": 607,
-			"nodeType": "Identifier",
-			"exception": null
-		},
-		{
-			"executedCode": "function put_out_fire(x, y) {\n    water(x, y, 100);\n    wind(0, 0, x, y, ★100★);\n}",
-			"producedValue": 100,
-			"nodeType": "Literal",
-			"exception": null
-		},
-		{
-			"executedCode": "function put_out_fire(x, y) {\n    water(x, y, 100);\n    ★wind(0, 0, x, y, 100)★;\n}",
-			"producedValue": "Made wind \nfrom (0, 0) to (-340, 606)\nwidth: 100\nWorld state is now:\nNo fires\n22863 water",
-			"nodeType": "CallExpression",
-			"exception": null
-		},
-		{
-			"executedCode": "★put_out_fire(-340, 607)★",
-			"nodeType": "CallExpression",
-			"exception": null
-		}
-		],
-			deduction_tree: {},
-			active_node: null
-		}
-
-
 		let request_data;
 		try {
 			request_data = await request.json();
 		}
 		catch {
-			request_data = default_input
+			return new Response("Bad Request: Could not parse request json", {
+				status: 400,
+				statusText: "Bad Request: Could not parse request json"
+			});
+		}
+
+		// set world and problem text; and any additional results
+		let this_world = request_data.world ? worlds[request_data.world] : worlds['elemental']
+		let this_problem = request_data.problem ? problems[request_data.problem] : problems['put_out_fire']
+		let this_run_results = ''
+		if(request_data.run_results) {
+			this_run_results = `
+### Reported results after running the test(s):
+
+${request_data.run_results}
+			`.trim()
 		}
 
 		// make input for "deduction tree"
@@ -199,37 +128,27 @@ Error message produced by code editor: ${request_data.parse_error_data.ace_error
 				case_specific = "Since there was a parse error, this set should include at least one clue that interprets the error message in plain english."
 			}
 			else if(request_data.execution_trace && request_data.execution_trace[request_data.execution_trace.length-1].exception) {
-				case_specific = "Since there was an exception duringexecution, this set should include at least one clue that interprets the exception message in plain english."
+				case_specific = "Since there was an exception during execution, this set should include at least one clue that interprets the exception message in plain english."
 			}
 
 			directive += case_specific
 		}
 		else if(request_data.active_node) {
 			if(request_data.active_node.type == "question"){
-				directive = "Please focus on generating clues that help address the question in the active node."
+				directive = "Please focus on generating clues that help address the question in the active deduction node."
 			}
 			else {
 				// must be a clue
-				directive = "Please prioritize generating questions that are raised by the clue in the active node. For example, questions that ask how this happened, or in what whay is what happened wrong/different from expected (but the actual questions should be as specific to the situation as possible)."
+				directive = "Please prioritize generating questions that are raised by the clue in the active deduction node. For example, questions that ask how this happened, or in what whay is what happened wrong/different from expected. The actual questions should be as specific to the situation as possible."
 			}
 		}
 		// Hopepfully it is never the case that there is a deduction tree passed in, but not an active node. But if it happens, we just won't have an explicit directive.
 
 		// TODO: put world/problem in variables; pass in OR store here and just pass in names?
 		const problem_desc = `
-## World: Elemental Magic World
-The player's code is a function being called in the context of a world where functions are "magic spells". The world is a 2D world, and the spells are cast from the player's wizard character positioned somewhere in the world. The coordinates in the spells are specified from the spellcaster's point of view: (0, 0) is the caster's location, and the x-axis points forward in the direction that the caster is facing.
+${this_world}
 
-The player has access to the following functions:
-fire(x, y) - create a fire element at position (x, y) relative to the caster.
-water(x, y, r) - create a circle of water at position (x, y) relative to the caster, of radius r. When water touches fire elements, that fire is put out. The water remains in the world until explicitly erased.
-wind(x1, y1, x2, y2, w) - create a "wind tunnel" from (x1, y1) to (x2, y2) (in caster-relative coordinates). The tunnel is a rectangle of width w, with (x1, y1) and (x2, y2) at the centers of the two sides with length w. Water is erased within the entire rectangle formed by the wind tunnel.
-
-Each function returns a short text summary of what it did, and the world state immediately after calling that funciton.
-
-## Problem: put_out_fires
-The player is working on a function, put_out_fires(x, y), which must both put out a nearby fire, and then erase any water that was used in putting out that fire.
-The function is tested by clearing the screen of water, spawing a fire, and having the player use the game interface to manually cast put_out_fires() positioned near or on the fire. So, it is normal and expected if put_out_fires is called with coordinates that are close to, but not exactly the same, as the coordinates of the fire. Do not focus on this difference in coordinates, unless there is reason to believe that it caused a problem (such as the fire not being put out).
+${this_problem}
 
 ## Code and test result
 
@@ -248,6 +167,8 @@ ${request_data.state_before}
 ${JSON.stringify(request_data.execution_trace, null, 2)}
 \`\`\`
 ${parse_error_desc}
+
+${this_run_results}
 
 ## Deduction tree so far
 
