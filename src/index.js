@@ -24,7 +24,7 @@ You and the player are collaboratively constructing a tree structure ("deduction
 As input, you will receive:
 1. The problem specification: what the code should do, an execution trace of what it does, the code itself, important APIs and functions it is using.
 2. The "deduction tree" so far: a nested JSON structure of Clues and Questions. This may be blank or missing when you are coming up with the initial set of observations.
-3. (when applicable) The "active node": which node in the observation tree is active - which node the user wants to focus on expanding next. 
+3. (when applicable) The "active node": which node in the observation tree is active - which node the player wants to focus on expanding next. 
 
 As output, you will return:
 A list of 1-5 new nodes (Clues and/or Questions) that expand primarily on the "active node", but are able to take into account the rest of the observations so far.
@@ -171,7 +171,7 @@ ${JSON.stringify(request_data.deduction_tree, null, 2)}
 
 ### Active node (starting point for this batch of clues/questions):
 
-${request_data.active_node}
+${JSON.stringify(request_data.active_node, null, 2)}
 		`.trim()
 
 		let parse_error_desc = ""
@@ -223,7 +223,7 @@ The player's code is a function being called in the context of a world where fun
 The player has access to the following functions:
 fire(x, y) - create a fire element at position (x, y) relative to the caster.
 water(x, y, r) - create a circle of water at position (x, y) relative to the caster, of radius r. When water touches fire elements, that fire is put out. The water remains in the world until explicitly erased.
-wind(x1, y1, x2, y2, w) - create a "wind tunnel" from (x1, y1) to (x2, y2) (in caster-relative coordinates), of width w. Water is erased within the entire rectangle formed by the wind tunnel.
+wind(x1, y1, x2, y2, w) - create a "wind tunnel" from (x1, y1) to (x2, y2) (in caster-relative coordinates). The tunnel is a rectangle of width w, with (x1, y1) and (x2, y2) at the centers of the two sides with length w. Water is erased within the entire rectangle formed by the wind tunnel.
 
 Each function returns a short text summary of what it did, and the world state immediately after calling that funciton.
 
@@ -255,7 +255,7 @@ ${deduction_tree_desc}
 
 ## Output
 
-Your final user-facing output should be a list of clues within <clue> tags and questions within <question> tags. The clues and questions will be programmatically extracted and presented to the player in the game interface.
+Your final player-facing output should be a list of clues within <clue> tags and questions within <question> tags. The clues and questions will be programmatically extracted and presented to the player in the game interface.
 
 ${directive}
 		`.trim()
