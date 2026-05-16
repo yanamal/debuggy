@@ -21,6 +21,8 @@ export default {
 
 The player's code is a function being called in the context of a world where functions are "magic spells". The world is a top-down 2D world. The coordinates in the spells are specified from the spellcaster's point of view: (0, 0) is the caster's location, and the x-axis points forward in the direction that the caster is facing.
 
+Keep in mind that in this coordinate system, from the point of view of the caster of the spell, the x-axis most likely looks "vertical", and the y-axis most likely looks "horizontal". Given the unorthodox system, it may be best to avoid talking about horizontal vs. vertical to the player.
+
 The player has access to the following functions:
 fire(x, y) - create a fire element at position (x, y) relative to the caster.
 water(x, y, r) - create a circle of water at position (x, y) relative to the caster, of radius r. When water touches fire elements, that fire is put out. The water remains in the world until explicitly erased.
